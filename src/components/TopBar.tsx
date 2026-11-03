@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { person } from "@/lib/content";
+import Monogram from "./Monogram";
 import { scrollToTarget } from "./SmoothScroll";
 
 function useClock(timeZone: string) {
@@ -49,6 +50,7 @@ export default function TopBar() {
       <Link
         href="/"
         className="brand"
+        aria-label={`${person.name}: back to the top`}
         onClick={(e) => {
           // already on the home page: Next would do nothing, so scroll to the very start ourselves
           if (pathname !== "/" || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -58,8 +60,7 @@ export default function TopBar() {
           history.replaceState(null, "", location.pathname + location.search);
         }}
       >
-        <span className="pulse-dot" aria-hidden="true" />
-        {person.brand}
+        <Monogram size={38} />
       </Link>
       <dl className="meta">
         <div>

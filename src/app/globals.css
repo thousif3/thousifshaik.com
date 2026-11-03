@@ -366,3 +366,22 @@ ol.case-bullets { list-style: decimal; }
 }
 .role:has(.role-toggle:focus-visible) .role-more { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.28s ease, visibility 0s; }
 @media print { .role-more { grid-template-rows: 1fr; visibility: visible; } .role-plus { display: none; } }
+
+/* TS monogram: top-left brand and loader */
+.brand { gap: 0; }
+.brand .mono { display: block; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.3s; }
+.brand:hover .mono { transform: rotate(-6deg) scale(1.08); filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.55)); }
+.mono-dot { animation: pulse 2.4s infinite; }
+.loader { font-size: 0; }
+.mono--draw path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: mono-draw 1.3s cubic-bezier(0.6, 0.05, 0.2, 1) 0.15s forwards; }
+.mono--draw path:nth-of-type(2) { animation-delay: 0.5s; }
+.mono--draw path:nth-of-type(3) { animation-delay: 0.85s; }
+.mono--draw .mono-dot { opacity: 0; animation: mono-dot 1.6s ease-out 1.9s infinite; }
+@keyframes mono-draw { to { stroke-dashoffset: 0; } }
+@keyframes mono-dot { 0% { opacity: 0; } 30%, 70% { opacity: 1; } 100% { opacity: 0.3; } }
+
+/* hero signature, drawn on beside the head */
+.ov-sig { right: clamp(16px, 5vw, 80px); top: 16vh; width: min(34vw, 520px); pointer-events: none; }
+.sig { display: block; width: 100%; height: auto; overflow: visible; opacity: 0.55; }
+.sig path { stroke: #e6eefb; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+@media (max-width: 760px) { .ov-sig { top: 13vh; right: 4vw; width: 52vw; } }
