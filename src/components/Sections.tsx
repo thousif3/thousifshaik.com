@@ -21,7 +21,7 @@ function Role({ it }: { it: Item }) {
   return (
     <li className="role reveal" style={{ ["--accent" as string]: d?.color }}>
       <div className="role-hd">
-        <h4>{it.title}</h4>
+        <h3>{it.title}</h3>
         <p className="role-when">{it.date}</p>
       </div>
       <p className="role-org">{it.org}</p>
@@ -88,7 +88,7 @@ export default function Sections() {
           {education.map((e) => (
             <div key={e.id} className="edu-card reveal">
               <p className="eyebrow">Education</p>
-              <h4>{e.title}</h4>
+              <h3>{e.title}</h3>
               <p className="role-org">{e.org}</p>
               {e.date && <p className="role-when">{e.date}</p>}
             </div>
@@ -102,7 +102,7 @@ export default function Sections() {
           {[...certs, ...awards].map((a) => (
             <li key={a.id} className="rec reveal" style={{ ["--accent" as string]: domainById[a.domain]?.color }}>
               <p className="eyebrow">{a.kind === "cert" ? "Certification" : "Award"}</p>
-              <h4>{a.title}</h4>
+              <h3>{a.title}</h3>
               <p className="role-org">{a.org}</p>
               <p className="rec-sum">{a.summary}</p>
             </li>

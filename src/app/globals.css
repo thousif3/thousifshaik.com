@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Metric-matched fallbacks: until the web fonts arrive, text is laid out with the same
+   width and line height, so the swap does not shift the page (layout shift on slow phones). */
+@font-face { font-family: "Instrument Serif Fallback"; font-style: normal; src: local("Times New Roman"), local("Times"), local("Liberation Serif"); size-adjust: 83.85%; ascent-override: 118.07%; descent-override: 36.97%; line-gap-override: 0%; }
+@font-face { font-family: "Instrument Serif Fallback"; font-style: italic; src: local("Times New Roman Italic"), local("Times Italic"), local("Liberation Serif Italic"); size-adjust: 88.54%; ascent-override: 111.82%; descent-override: 35.01%; line-gap-override: 0%; }
+@font-face { font-family: "Inter Tight Fallback"; src: local("Arial"), local("Helvetica"), local("Liberation Sans"); size-adjust: 97.15%; ascent-override: 99.72%; descent-override: 24.83%; line-gap-override: 0%; }
+@font-face { font-family: "JetBrains Mono Fallback"; src: local("Courier New"), local("Courier"), local("Liberation Mono"); size-adjust: 99.98%; ascent-override: 102.02%; descent-override: 30%; line-gap-override: 0%; }
+
 :root {
   --bg: #020408;
   --bg2: #060c14;
@@ -11,9 +18,9 @@
   --text: #e2eaf6;
   --muted: #5a7090;
   --muted2: #8aa2c0;
-  --serif: "Instrument Serif", ui-serif, Georgia, serif;
-  --sans: "Inter Tight Variable", "Inter Tight", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --serif: "Instrument Serif", "Instrument Serif Fallback", ui-serif, Georgia, serif;
+  --sans: "Inter Tight Variable", "Inter Tight", "Inter Tight Fallback", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono Variable", "JetBrains Mono Fallback", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --accent: var(--cyan);
 }
 
@@ -197,7 +204,7 @@ html.has-gsap .reveal { opacity: 0; transform: translateY(24px); filter: blur(6p
 .roles { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
 .role { padding: 20px 22px; border-radius: 14px; background: rgba(6, 12, 20, 0.7); border: 0.5px solid var(--border); border-left: 2px solid var(--accent); }
 .role-hd { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
-.role h4, .edu-card h4, .rec h4 { margin: 0; font-size: 16px; font-weight: 600; }
+.role h3, .edu-card h3, .rec h3 { margin: 0; font-size: 16px; font-weight: 600; }
 .role-when { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; margin: 0; }
 .role-org { font-family: var(--mono); font-size: 11px; color: var(--accent); margin: 4px 0 0; }
 .role-sum { font-size: 13px; color: var(--muted2); margin: 10px 0 0; }
