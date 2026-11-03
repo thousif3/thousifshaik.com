@@ -159,39 +159,156 @@
       "domain": "ai",
       "title": "ANTA",
       "subtitle": "Autonomous Network Triage Agent",
-      "date": "Fall 2026",
-      "status": "In progress",
-      "summary": "An agentic network-triage assistant that drives Wireshark/TShark to inspect captures and surface what matters, proposed for CSCI B577 Security Engineering.",
+      "date": "Fall 2026 · Security Engineering (CSCI B577)",
+      "status": "Implemented · evaluated on synthetic traffic",
+      "summary": "ANTA replaces the binary network alert with a graded trust score for every network segment. Two cooperating agents read the traffic and challenge each other's evidence, and the score says how much to trust a segment. I built a working Python implementation and tested it on synthetic traffic: over 30 held-out seeds the challenge step cut the false positive rate from 11.1% to 7.3% at a cost of 3.3 points of recall. The data is synthetic and I wrote the benign anomalies myself, so these numbers do not show how ANTA would perform on CICIDS2017 or real traffic.",
       "bullets": [
-        "Proposed as the course project for CSCI B577 Security Engineering at IU Indianapolis."
+        "Two rule-based agents read parsed PCAP traffic: one checks protocol conformance, the other behavioral timing.",
+        "Each agent challenges the other's evidence. Findings that survive set the score, and disagreement counts as uncertainty instead of being averaged away.",
+        "Trust is a subjective-logic opinion (belief, disbelief, uncertainty), fused into one Trustability and Performance Resilience Score per segment.",
+        "A remediation module drafts iptables and ufw rules for a human to review. No code path applies a rule.",
+        "Evaluated on 6,000 labeled synthetic segment-windows: 97% recall, 7.3% false positive rate. Not yet tested on CICIDS2017 or live traffic."
       ],
       "stack": [
         "Python",
-        "TShark",
-        "Wireshark",
-        "LLM agents"
+        "PCAP",
+        "Subjective logic",
+        "iptables / ufw",
+        "Synthetic traffic generator"
       ],
-      "links": []
+      "links": [],
+      "sections": [
+        {
+          "title": "The problem",
+          "body": "Signature-based and threshold-based detection tools bury analysts in alerts, and many of those alerts are false positives. A binary alert says \"malicious\" or \"benign\" and nothing about confidence. An analyst can't tell whether a flag rests on one weak signal or on several that agree, and can't watch a segment recover after an incident. ANTA computes trust and justifies it instead."
+        },
+        {
+          "title": "How it works",
+          "body": "Traffic is grouped by network segment (a /24) and 10-second window. The first 10 windows of each capture are attack-free and set a per-segment baseline. Four stages follow.",
+          "ordered": true,
+          "items": [
+            "Ingestion. A small Python reader parses classic PCAP files (Ethernet, IPv4, TCP, UDP) and extracts timestamps, addresses, ports, TCP flags and length. The design called for TShark, which could not be installed in the container.",
+            "Protocol Conformance Agent. It counts TCP packets with illegal flag combinations (NULL, SYN+FIN, SYN+RST, FIN+PSH+URG without ACK) plus half-open handshakes beyond a tolerance of three, and turns the count into a deviation between 0 and 1.",
+            "Behavioral Timing Agent. It takes the larger of the window's packet count and its one-second peak, each divided by the segment's baseline, and turns the excess into a deviation.",
+            "Challenge step. A deviation of 0.45 or more counts as a finding. A finding survives if the other agent also has one, or if it is at least 0.90 and can stand alone. A finding that does not survive is refuted: its deviation is cut to a quarter and the gap is moved into uncertainty."
+          ],
+          "note": "Both agents are deterministic functions of the window statistics, with no language model. The challenge step is therefore a fixed cross-check, not a debate between LLMs."
+        },
+        {
+          "title": "The trust score",
+          "body": "Each agent's deviation becomes a subjective-logic opinion from evidence counts: belief that the segment is trustworthy (b), disbelief (d) and uncertainty (u), with b + d + u = 1. When there is little evidence, uncertainty stays high, so a segment isn't called safe or hostile on thin data. The two opinions are fused by cumulative fusion, which equals adding the evidence, and the score is the probability expectation of the fused opinion, where a = 0.5 is the base rate:",
+          "formula": "T = b + a · u",
+          "note": "A window raises an alert when its score is below 0.75. A decayed running sum of evidence (λ = 0.5 per window) gives the score that triggers remediation drafts, so a segment earns trust back gradually after an incident. λ was chosen on five development seeds from {0.8, 0.5, 0.3, 0.1}; the other constants were set before any run and not changed."
+        },
+        {
+          "title": "Remediation, with a human in the loop",
+          "body": "When a segment's running score drops below 0.75, ANTA writes draft iptables and ufw rules to a text file headed \"DRAFT - NOT APPLIED\". Offenders seen in the last three windows get per-host rules scoped to the segment. If there are none, or the sources are spoofed, the draft is a SYN rate limit for the segment. Internal hosts are never blocked, and no code path executes a rule. A wrong block can cut off legitimate users, so a human reviews every rule."
+        },
+        {
+          "title": "How I tested it",
+          "items": [
+            "Synthetic captures. Each seeded capture has four segments and 60 windows of Poisson flow arrivals with complete TCP handshakes, 1% abandoned handshakes and background DNS.",
+            "Injected events from window 12 on: four attacks (SYN flood with spoofed sources, UDP flood, illegal-flag scan, low-rate SYN probe) and two benign anomalies (a flash crowd at 2.5 to 9 times the normal flow rate, and an internal device sending a few NULL-flag packets). The benign anomalies exist to test whether the challenge step helps.",
+            "Protocol. Seeds 0 to 4 for development, seeds 100 to 129 held out and run once. The test set has 6,000 labeled segment-windows: 831 attack, 595 benign-anomaly and 4,574 normal.",
+            "Ten unit tests (opinion algebra, fusion, PCAP round trip, challenge rules, determinism, draft scope, a full run) pass."
+          ]
+        },
+        {
+          "title": "Results",
+          "body": "Window-level detection, mean ± standard deviation over 30 held-out seeds:",
+          "items": [
+            "ANTA: precision 0.67 ± 0.11, recall 0.97 ± 0.03, F1 0.79 ± 0.09, false positive rate 0.073 ± 0.022.",
+            "No challenge (same evidence, fused without the challenge step): precision 0.59, recall 1.00, F1 0.73, false positive rate 0.111.",
+            "Conformance agent only: precision 0.66, recall 0.73, F1 0.68, false positive rate 0.058.",
+            "Timing agent only: precision 0.55, recall 0.42, F1 0.46, false positive rate 0.056.",
+            "Either agent alerts: precision 0.59, recall 1.00, F1 0.73, false positive rate 0.112."
+          ],
+          "note": "The challenge step lowers the false positive rate from 11.1% to 7.3% and raises F1 from 0.73 to 0.79, while recall falls from 100% to 96.7% (27 of 831 attack windows missed, all low-rate SYN probes where a lone mild finding was refuted)."
+        },
+        {
+          "title": "What the numbers show",
+          "items": [
+            "False positives. None of the 4,574 normal windows alerted in any method. All 380 ANTA false positives are in the injected benign anomalies: 193 of 306 flash-crowd windows and 187 of 289 faulty-device windows. Without the challenge step, 289 and 289. The step removed about a third of the false alerts on traffic built to fool it; severe flash crowds look like volumetric attacks to the timing agent and are not refuted.",
+            "Score behavior. The mean window score is 0.94 on normal windows, 0.74 on faulty-device windows, 0.68 on flash-crowd windows, and between 0.22 (SYN flood) and 0.61 (low-rate SYN) on attack windows. The score drops during each event and returns to its normal level within a window or two after it ends.",
+            "Detection and drafts. At least one window alerted in 324 of 329 attack events, almost always in the event's first window. ANTA wrote 313 drafts. An attack event had a draft in its segment during the event or the two windows after it in 278 of 329 cases; I did not break down the 51 events without one. Of those 278, 277 had the right scope. The check is a string comparison against the generator's labels, and no rule was run against a firewall.",
+            "Speed. Over 4.0 million packets, the parser handled about 0.69 million packets per second and the rest of the pipeline about 0.94 million per second on a 2-CPU container. The synthetic packets carry no real payloads, so this says little about live capture."
+          ]
+        },
+        {
+          "title": "Limits and ethics",
+          "items": [
+            "These results are weaker evidence than the table suggests. I wrote the generator, the agents and the challenge rule with the same picture of what an attack looks like, so the agents are likely to find what I built in.",
+            "The benign anomalies were designed to be refutable by the challenge step, which makes the 11.1% to 7.3% improvement partly circular. The 0% false positive rate on normal windows reflects stationary Poisson traffic, not a property of the method.",
+            "The challenge step has a cost: it lowers false positives by refuting lone mild findings, and that is how it lost 27 low-rate probes. Whether that trade is worth it depends on the operator.",
+            "Thresholds matter. λ was tuned on five seeds and the other constants were fixed by judgment. I expect lower precision on CICIDS2017 or live traffic, where benign behavior is much messier.",
+            "LLM agents were not tested, so the concern that their explanations may not match the evidence remains open.",
+            "Packet captures hold sensitive data, so ANTA should only run on traffic the operator is authorized to inspect. Automated blocking can hurt legitimate users, which is why drafted rules need human approval."
+          ]
+        },
+        {
+          "title": "What's next",
+          "body": "Replace the parser with TShark and run the same pipeline on CICIDS2017 PCAPs (Monday for the normal baseline, the attack days for scores). Then swap the rule-based agents for LLM agents and compare, and study how the weights and recovery rate should be set per environment. I make no comparison with the 41.3% false positive reduction reported by Hmimou et al., which is on different data with a different design."
+        }
+      ],
+      "references": [
+        {
+          "label": "Jøsang (1998), A Subjective Metric of Authentication",
+          "href": "https://conf.laas.fr/esorics/notices/Jsang1998.html"
+        },
+        {
+          "label": "Jøsang, Pope & Hayward (2006), Trust Network Analysis with Subjective Logic",
+          "href": "https://crpit.scem.westernsydney.edu.au/abstracts/CRPITV48Josang.html"
+        },
+        {
+          "label": "Sharafaldin, Lashkari & Ghorbani (2018), CICIDS2017 dataset",
+          "href": "https://www.scitepress.org/Papers/2018/66398/66398.pdf"
+        },
+        {
+          "label": "Du et al. (2024), Improving Factuality and Reasoning through Multiagent Debate",
+          "href": "https://arxiv.org/abs/2305.14325"
+        },
+        {
+          "label": "Song et al. (2024), Audit-LLM: Multi-Agent Collaboration for Log-based Insider Threat Detection",
+          "href": "https://arxiv.org/abs/2408.08902"
+        },
+        {
+          "label": "Hmimou et al. (2025), A Multi-Agent System for Cybersecurity Threat Detection and Correlation Using LLMs",
+          "href": "https://doi.org/10.1109/access.2025.3602681"
+        }
+      ]
     },
     {
-      "id": "fixmyitch",
+      "id": "healthcare-ai",
       "kind": "project",
       "featured": 5,
-      "domain": "product",
-      "title": "FixMyItch",
-      "subtitle": "Live web product",
-      "date": "2026",
-      "status": "Live",
-      "summary": "A public web product at fixmyitch.io, shipped and iterated as a real product rather than a class demo.",
-      "bullets": [],
+      "domain": "ai",
+      "title": "Healthcare AI platform",
+      "subtitle": "Predicting appointment no-shows",
+      "date": "Spring 2026 · Engineering Cloud Computing",
+      "status": "Completed",
+      "summary": "A three-tier microservice system that predicts which patients are likely to miss appointments, so a clinic can act before the revenue is lost. A dashboard flags high flight-risk patients, backed by a Node.js orchestrator and a Python service that serves a scikit-learn Random Forest model.",
+      "bullets": [
+        "Presentation: a Next.js 15 dashboard with client-side filtering and risk-tiered alerts for patients whose predicted no-show probability is above 0.7.",
+        "Logic: a Node.js and Express orchestrator that runs the PostgreSQL queries and calls the AI service over REST.",
+        "Intelligence: a FastAPI service wrapping a serialized scikit-learn Random Forest. Inputs include the lead time between booking and appointment, age and gender, and prior no-show history when available.",
+        "Data: a PostgreSQL schema with Admin, Staff and Doctor roles ready for access control, plus a seed script that generates 600+ mock patient records. No real patient data."
+      ],
       "stack": [
-        "Web",
-        "Product"
+        "Next.js",
+        "TypeScript",
+        "Tailwind CSS",
+        "Node.js",
+        "Express",
+        "PostgreSQL",
+        "Python",
+        "FastAPI",
+        "scikit-learn",
+        "Pandas"
       ],
       "links": [
         {
-          "label": "Visit FixMyItch",
-          "href": "https://fixmyitch.io"
+          "label": "Source on GitHub",
+          "href": "https://github.com/thousif3/healthcare-ai-platform"
         }
       ]
     },
@@ -266,8 +383,8 @@
       "date": "2024 – 2025",
       "summary": "Led campus placements for the CSE-AI&ML department.",
       "bullets": [
-        "Coordinated placement drives resulting in offers for 100+ students across CSE and AI&ML departments.",
-        "Managed relationships with 20+ recruiting companies across product, IT, consulting and services.",
+        "Coordinated 200+ recruitment drives for about 200 companies and 6,000 students across the CSE and AI&ML departments.",
+        "Managed relationships with recruiting companies across product, IT, consulting and services.",
         "Built placement tracking systems and maintained company contact databases to streamline the recruiting pipeline.",
         "Awarded a gold plaque by the CBIT Principal and a formal Certificate of Appreciation."
       ]

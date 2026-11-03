@@ -34,6 +34,7 @@ export default function Flight() {
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [latent, setLatent] = useState<Latent | null>(null);
   const [sceneReady, setSceneReady] = useState(false);
+  const [flat, setFlat] = useState(false);
 
   const stage = useRef<HTMLDivElement>(null);
   const hero = useRef<HTMLDivElement>(null);
@@ -49,13 +50,31 @@ export default function Flight() {
   useEffect(() => {
     setWebgl(hasWebGL());
     loadLatent().then(setLatent).catch((e) => console.error(e));
+    try {
+      if (sessionStorage.getItem("flat") === "1") setFlat(true);
+    } catch {
+      /* storage can be unavailable; the choice just won't persist */
+    }
   }, []);
+
+  const chooseFlat = (value: boolean) => {
+    setFlat(value);
+    try {
+      sessionStorage.setItem("flat", value ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+    window.scrollTo(0, 0);
+  };
+
+  // 3D only when WebGL2 exists and the visitor hasn't chosen the flat view
+  const on = webgl === true && !flat;
 
   const onReady = useCallback(() => setSceneReady(true), []);
 
   // scroll -> flight position
   useEffect(() => {
-    if (!webgl) return;
+    if (!on) return;
     gsap.registerPlugin(ScrollTrigger);
     flight.stops = STOPS;
     const a = ScrollTrigger.create({
@@ -78,11 +97,11 @@ export default function Flight() {
       a.kill();
       b.kill();
     };
-  }, [webgl]);
+  }, [on]);
 
   // per-frame DOM overlay: fades, leader line, hover tag, HUD
   useEffect(() => {
-    if (!webgl) return;
+    if (!on) return;
     let raf = 0;
     const posOf = (id: string) => latent?.items.find((i) => i.id === id)?.pos;
     const show = (el: HTMLElement | null, o: number, dy = 0) => {
@@ -93,6 +112,10 @@ export default function Flight() {
       el.style.visibility = o < 0.01 ? "hidden" : "visible";
     };
     const loop = () => {
+      if (flight.after > 0.995) {
+        raf = requestAnimationFrame(loop); // flight is fully off screen: nothing to animate
+        return;
+      }
       const s = flight.s;
       const h = 1 - smooth(clamp01(s / 0.55));
       show(hero.current, h, -40 * (1 - h));
@@ -164,7 +187,7 @@ export default function Flight() {
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [webgl, latent]);
+  }, [on, latent]);
 
   const toLab = () => {
     const el = document.getElementById("flight");
@@ -186,12 +209,17 @@ export default function Flight() {
     </>
   );
 
-  if (webgl === false) {
+  if (webgl === false || flat) {
     return (
       <>
         <section className="static-hero" aria-label="Introduction">
           <p className="static-name" aria-hidden="true">THOUSIF</p>
           {heroCopy}
+          {webgl && (
+            <p className="static-switch">
+              <button type="button" className="btn-s" onClick={() => chooseFlat(false)}>Switch to the 3D view</button>
+            </p>
+          )}
         </section>
         <section className="static-work" aria-label="Featured work">
           <div className="static-grid">
@@ -208,7 +236,7 @@ export default function Flight() {
   return (
     <>
       <div className="stage" ref={stage} aria-hidden="true">
-        {webgl && latent && <Scene latent={latent} onReady={onReady} />}
+        {on && latent && <Scene latent={latent} onReady={onReady} />}
         <div className="stage-veil" />
       </div>
       <div className={`loader ${sceneReady ? "loader--done" : ""}`} aria-hidden="true">
@@ -223,6 +251,7 @@ export default function Flight() {
           <div className="ov ov-hint" ref={hint}>
             <span>Scroll to fly through the work ↓</span>
             <button type="button" className="btn-s" onClick={toLab}>Skip to the lab</button>
+            <button type="button" className="btn-s" onClick={() => chooseFlat(true)} title="A lighter page without the 3D scene">Flat view</button>
             <button type="button" className="btn-s" onClick={() => scrollToTarget("#after-flight")}>Skip the flight</button>
           </div>
 

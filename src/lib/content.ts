@@ -1,6 +1,7 @@
 import raw from "@/content/content.json";
 
 export type Link = { label: string; href: string };
+export type Section = { title: string; body?: string; items?: string[]; ordered?: boolean; formula?: string; note?: string };
 export type Domain = { id: string; label: string; color: string };
 export type ItemKind = "project" | "role" | "education" | "cert" | "award" | "skill";
 
@@ -17,6 +18,8 @@ export type Item = {
   bullets?: string[];
   stack?: string[];
   links?: Link[];
+  sections?: Section[];
+  references?: Link[];
   featured?: number;
   liveStats?: boolean;
 };

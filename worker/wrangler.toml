@@ -1,0 +1,16 @@
+# Free "ask about Thousif" endpoint for the portfolio's live lab.
+# Deploy:  cd worker && npx wrangler login && npx wrangler deploy
+name = "thousif-ask"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[ai]
+binding = "AI"
+
+[vars]
+# Browsers from these origins may call the endpoint.
+ALLOWED_ORIGINS = "https://thousifshaik.com,https://www.thousifshaik.com"
+# Models are looked up in Cloudflare's Workers AI catalog. If the first is refused on the
+# free plan, the Worker tries the second.
+MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8-fast"
+FALLBACK_MODEL = "@cf/meta/llama-3.2-3b-instruct"

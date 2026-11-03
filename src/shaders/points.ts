@@ -57,7 +57,7 @@ export const pointsVertex = /* glsl */ `
     float hot = max(step(abs(aIndex - uHover), 0.5), step(abs(aIndex - uFocus), 0.5));
     vHot = hot;
     float size = aSize * (1.0 + hot * 0.9);
-    gl_PointSize = size * uSize * uBoost * uPixelRatio / max(0.1, -mv.z);
+    gl_PointSize = min(size * uSize * uBoost * uPixelRatio / max(0.1, -mv.z), 80.0 * uPixelRatio);
 
     // gentle twinkle
     float tw = 0.75 + 0.25 * sin(uTime * (1.2 + aSeed * 2.0) + aSeed * 60.0);
