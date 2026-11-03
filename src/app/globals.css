@@ -338,3 +338,9 @@ ol.case-bullets { list-style: decimal; }
   html.has-gsap .reveal { filter: none; }
   .stage-veil { display: none; }
 }
+
+/* back to top: bottom left, faint until hovered or focused */
+.to-top { position: fixed; left: 16px; bottom: 16px; z-index: 40; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; color: var(--cyan); background: rgba(6, 12, 20, 0.55); border: 0.5px solid var(--border2); cursor: pointer; opacity: 0; visibility: hidden; transform: translateY(6px); transition: opacity 0.3s, visibility 0.3s, transform 0.3s, background 0.2s; }
+.to-top--on { opacity: 0.3; visibility: visible; transform: none; }
+.to-top--on:hover, .to-top--on:focus-visible { opacity: 0.95; background: rgba(6, 12, 20, 0.9); }
+@media (max-width: 760px) { .to-top { left: 12px; bottom: 12px; } }
