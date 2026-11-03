@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { person } from "@/lib/content";
+import { scrollToTarget } from "./SmoothScroll";
 
 function useClock(timeZone: string) {
   const [now, setNow] = useState<string>("");
@@ -20,6 +22,7 @@ export default function TopBar() {
   const now = useClock(person.timeZone);
   const [open, setOpen] = useState(false);
   const btn = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
 
   // close on Escape (returning focus to the button) and whenever a menu link is used
   useEffect(() => {
@@ -43,7 +46,18 @@ export default function TopBar() {
 
   return (
     <header className={`topbar ${open ? "topbar--open" : ""}`} aria-label="Site">
-      <Link href="/" className="brand">
+      <Link
+        href="/"
+        className="brand"
+        onClick={(e) => {
+          // already on the home page: Next would do nothing, so scroll to the very start ourselves
+          if (pathname !== "/" || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          e.preventDefault();
+          setOpen(false);
+          scrollToTarget(0);
+          history.replaceState(null, "", location.pathname + location.search);
+        }}
+      >
         <span className="pulse-dot" aria-hidden="true" />
         {person.brand}
       </Link>
