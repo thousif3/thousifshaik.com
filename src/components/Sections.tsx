@@ -12,30 +12,13 @@ import {
   type Item,
 } from "@/lib/content";
 import FooterModel from "./FooterModel";
+import RoleCard from "./RoleCard";
 import Year from "./Year";
 
 const NOW = new Set(["building-manager", "parking-ops", "grader", "lsc-secretary"]);
 
 function Role({ it }: { it: Item }) {
-  const d = domainById[it.domain];
-  return (
-    <li className="role reveal" style={{ ["--accent" as string]: d?.color }}>
-      <div className="role-hd">
-        <h3>{it.title}</h3>
-        <p className="role-when">{it.date}</p>
-      </div>
-      <p className="role-org">{it.org}</p>
-      {it.bullets && it.bullets.length > 0 ? (
-        <ul className="role-bullets">
-          {it.bullets.map((b) => (
-            <li key={b}>{b}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className="role-sum">{it.summary}</p>
-      )}
-    </li>
-  );
+  return <RoleCard it={it} accent={domainById[it.domain]?.color} />;
 }
 
 function SectionHead({ tag, title, accent }: { tag: string; title: string; accent: string }) {

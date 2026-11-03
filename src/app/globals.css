@@ -202,7 +202,7 @@ html.has-gsap .reveal { opacity: 0; transform: translateY(24px); filter: blur(6p
 .exp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
 .exp-col-hd { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
 .roles { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
-.role { padding: 20px 22px; border-radius: 14px; background: rgba(6, 12, 20, 0.7); border: 0.5px solid var(--border); border-left: 2px solid var(--accent); }
+.role { position: relative; padding: 20px 22px; border-radius: 14px; background: rgba(6, 12, 20, 0.7); border: 0.5px solid var(--border); border-left: 2px solid var(--accent); }
 .role-hd { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .role h3, .edu-card h3, .rec h3 { margin: 0; font-size: 16px; font-weight: 600; }
 .role-when { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; margin: 0; }
@@ -344,3 +344,25 @@ ol.case-bullets { list-style: decimal; }
 .to-top--on { opacity: 0.3; visibility: visible; transform: none; }
 .to-top--on:hover, .to-top--on:focus-visible { opacity: 0.95; background: rgba(6, 12, 20, 0.9); }
 @media (max-width: 760px) { .to-top { left: 12px; bottom: 12px; } }
+
+/* Experience: headline at rest, detail on hover / keyboard focus / tap */
+.role-toggle { all: unset; cursor: pointer; }
+.role-toggle::after { content: ""; position: absolute; inset: 0; border-radius: 14px; } /* whole card is the tap target */
+.role-toggle:focus-visible::after { outline: 1.5px solid var(--cyan); outline-offset: 2px; }
+.role--more .role-hd, .role--more .role-org { padding-right: 22px; }
+.role-plus { position: absolute; right: 20px; bottom: 20px; width: 10px; height: 10px; opacity: 0.55; transition: transform 0.25s, opacity 0.25s; }
+.role-plus::before, .role-plus::after { content: ""; position: absolute; background: var(--accent); }
+.role-plus::before { left: 0; right: 0; top: 4.5px; height: 1px; }
+.role-plus::after { top: 0; bottom: 0; left: 4.5px; width: 1px; }
+.role-more { display: grid; grid-template-rows: 0fr; visibility: hidden; transition: grid-template-rows 0.28s ease, visibility 0s 0.28s; }
+.role-more-in { overflow: hidden; min-height: 0; }
+.role--more .role-bullets, .role--more .role-sum { margin-top: 12px; }
+.role--open .role-more { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.28s ease, visibility 0s; }
+.role--open .role-plus { transform: rotate(45deg); opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  .role--more:hover .role-more { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.28s ease, visibility 0s; }
+  .role--more:hover .role-plus { transform: rotate(45deg); opacity: 1; }
+  .role--more:hover { background: rgba(10, 18, 30, 0.85); }
+}
+.role:has(.role-toggle:focus-visible) .role-more { grid-template-rows: 1fr; visibility: visible; transition: grid-template-rows 0.28s ease, visibility 0s; }
+@media print { .role-more { grid-template-rows: 1fr; visibility: visible; } .role-plus { display: none; } }
