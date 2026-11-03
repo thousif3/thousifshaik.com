@@ -38,7 +38,7 @@ export default function Inspector({ latent }: { latent: Latent | null }) {
   const neighbors = latent?.items.find((x) => x.id === id)?.neighbors ?? [];
 
   return (
-    <aside className="inspector" style={{ ["--accent" as string]: d?.color }} aria-label={`${it.title} details`}>
+    <aside className="inspector" data-lenis-prevent style={{ ["--accent" as string]: d?.color }} aria-label={`${it.title} details`}>
       <button type="button" className="insp-close" onClick={() => setId(null)} aria-label="Close">×</button>
       <p className="eyebrow">{kindLabel[it.kind]} · {d?.label}</p>
       <h3>{it.title}</h3>

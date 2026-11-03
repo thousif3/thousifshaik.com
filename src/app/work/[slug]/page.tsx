@@ -53,12 +53,38 @@ export default async function WorkPage({ params }: { params: Promise<{ slug: str
       </dl>
       <p className="case-lead">{p.summary}</p>
       {p.liveStats && <LiveStats />}
-      {p.bullets && p.bullets.length > 0 && (
+      {!p.sections && p.bullets && p.bullets.length > 0 && (
         <section>
           <h2>What I built</h2>
           <ul className="case-bullets">
             {p.bullets.map((b) => (
               <li key={b}>{b}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {p.sections?.map((sec) => (
+        <section key={sec.title} className="case-sec">
+          <h2>{sec.title}</h2>
+          {sec.body && <p>{sec.body}</p>}
+          {sec.formula && <p className="case-formula" aria-label={sec.formula}>{sec.formula}</p>}
+          {sec.items &&
+            (sec.ordered ? (
+              <ol className="case-bullets">{sec.items.map((i) => <li key={i}>{i}</li>)}</ol>
+            ) : (
+              <ul className="case-bullets">{sec.items.map((i) => <li key={i}>{i}</li>)}</ul>
+            ))}
+          {sec.note && <p className="case-note">{sec.note}</p>}
+        </section>
+      ))}
+      {p.references && p.references.length > 0 && (
+        <section className="case-sec">
+          <h2>References</h2>
+          <ul className="case-refs">
+            {p.references.map((r) => (
+              <li key={r.href}>
+                <a href={r.href} target="_blank" rel="noopener">{r.label} ↗</a>
+              </li>
             ))}
           </ul>
         </section>

@@ -152,6 +152,12 @@ html.use-custom-cursor .cursor,html.use-custom-cursor .cursor-ring{display:block
 .hit-score { font-family: var(--mono); font-size: 11px; color: var(--muted2); }
 .lab-deep { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 12px; color: var(--muted2); cursor: pointer; }
 .lab-deep input { accent-color: var(--cyan); }
+.ov-lab .lab { max-height: calc(100svh - 110px); overflow-y: auto; }
+.lab-answer { margin: 14px 0 0; padding: 14px 16px; border-radius: 12px; background: rgba(10, 18, 32, 0.85); border: 0.5px solid var(--border2); }
+.lab-answer .eyebrow { margin-bottom: 6px; }
+.lab-answer-text { margin: 0; font-size: 14.5px; line-height: 1.65; color: var(--text); white-space: pre-wrap; }
+.lab-thinking { margin: 0; font-size: 13px; color: var(--muted2); }
+.lab-ai-note { margin: 10px 0 0; font-size: 11px; color: var(--muted); }
 .lab-err { color: #fbbf24; font-size: 13px; margin: 10px 0 0; }
 .lab-note { font-size: 11px; color: var(--muted); margin: 12px 0 0; line-height: 1.5; }
 
@@ -161,7 +167,7 @@ html.use-custom-cursor .cursor,html.use-custom-cursor .cursor-ring{display:block
 .insp-close { position: absolute; top: 10px; right: 12px; background: none; border: 0; color: var(--muted2); font-size: 22px; cursor: pointer; }
 .insp-org { font-family: var(--mono); font-size: 11px; color: var(--muted); margin: 0 0 12px; }
 .insp-sum { font-size: 14px; line-height: 1.6; color: var(--muted2); }
-.insp-bullets { padding-left: 18px; color: var(--muted2); font-size: 13px; line-height: 1.55; }
+.insp-bullets { list-style: disc; margin: 0 0 16px; padding-left: 18px; color: var(--muted2); font-size: 13px; line-height: 1.55; }
 .insp-nb-hd { margin-top: 16px; }
 .insp-nb { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .insp-nb button { font: inherit; font-size: 12px; color: var(--text); background: rgba(255, 255, 255, 0.04); border: 0.5px solid var(--border2); border-radius: 999px; padding: 5px 10px; cursor: pointer; }
@@ -195,7 +201,7 @@ html.has-gsap .reveal { opacity: 0; transform: translateY(24px); filter: blur(6p
 .role-when { font-family: var(--mono); font-size: 10px; color: var(--muted); white-space: nowrap; margin: 0; }
 .role-org { font-family: var(--mono); font-size: 11px; color: var(--accent); margin: 4px 0 0; }
 .role-sum { font-size: 13px; color: var(--muted2); margin: 10px 0 0; }
-.role-bullets { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; line-height: 1.6; color: var(--muted2); }
+.role-bullets { list-style: disc; margin: 10px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; line-height: 1.6; color: var(--muted2); }
 .edu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
 .edu-card { padding: 20px 22px; border-radius: 14px; background: rgba(6, 12, 20, 0.7); border: 0.5px solid var(--border2); }
 
@@ -229,7 +235,15 @@ html.has-gsap .reveal { opacity: 0; transform: translateY(24px); filter: blur(6p
 .case-facts dd { margin: 4px 0 0; font-size: 14px; color: var(--muted2); }
 .case-lead { font-size: 20px; line-height: 1.6; color: var(--text); }
 .case h2 { font-family: var(--serif); font-weight: 400; font-size: 34px; margin: 40px 0 12px; }
-.case-bullets { padding-left: 20px; display: grid; gap: 10px; color: var(--muted2); line-height: 1.65; }
+.case-bullets { list-style: disc; padding-left: 20px; display: grid; gap: 10px; color: var(--muted2); line-height: 1.65; }
+.case-sec { margin-top: 8px; }
+.case-sec p { color: var(--muted2); line-height: 1.7; margin: 0 0 12px; }
+.case-formula { font-family: var(--mono); font-size: 20px; color: var(--text) !important; background: rgba(10, 18, 32, 0.8); border: 0.5px solid var(--border2); border-radius: 12px; padding: 16px 20px; text-align: center; margin: 14px 0 !important; }
+.case-note { font-size: 14px; }
+.case-refs { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.case-refs a { color: var(--muted2); text-decoration: none; border-bottom: 0.5px solid var(--border2); }
+.case-refs a:hover { color: var(--cyan); border-color: var(--cyan); }
+ol.case-bullets { list-style: decimal; }
 .case-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
 .case-next { margin-top: 56px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 .case-next a { color: var(--accent); }

@@ -1,4 +1,4 @@
-# Portfolio repo rules (thousif3.github.io)
+# Portfolio repo rules (thousifshaik.com)
 
 This is the "Latent Space" portfolio: Next.js (static export) + react-three-fiber + GLSL + GSAP/Lenis, with a Python embedding pipeline. Deployed to GitHub Pages by `.github/workflows/deploy.yml`.
 
@@ -14,3 +14,4 @@ This is the "Latent Space" portfolio: Next.js (static export) + react-three-fibe
 - Rebuild the 3D layout after content edits: `python pipeline/embed.py` (uses MiniLM if sentence-transformers is installed, else TF-IDF)
 - Build: `npm run build` (output in `out/`)
 - Preview the build: `python -m http.server 4173 -d out`, then open http://localhost:4173
+- Ask-about-me assistant: `worker/` is a separate Cloudflare Worker (free Workers AI). Deploy with `cd worker && npx wrangler deploy`, then set the repo variable `ASK_URL` to its URL. It reads `src/content/content.json`, so redeploy it after content changes. Never put secrets in the repo; the Worker needs none.

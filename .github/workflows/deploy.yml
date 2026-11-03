@@ -43,6 +43,8 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: "1"
           NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://thousif3.github.io' }}
+          # URL of the deployed worker/ (leave the variable unset to ship the lab as search-only)
+          NEXT_PUBLIC_ASK_URL: ${{ vars.ASK_URL }}
 
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5

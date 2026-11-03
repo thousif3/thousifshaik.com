@@ -57,3 +57,9 @@ Repo **Settings → Pages → Source: GitHub Actions**. Every push to `main` run
 `.github/workflows/deploy.yml`. For a custom domain, set it under Settings → Pages
 and add a repo variable `SITE_URL` (e.g. `https://thousif3.dev`) so the sitemap and
 share cards use it.
+
+## Ask-about-me assistant (optional)
+
+The live lab can answer questions about the profile with a free model. `worker/` is a tiny
+Cloudflare Worker (Workers AI, free allowance) that answers only from `src/content/content.json`.
+See `worker/README.md`. Without the `ASK_URL` repo variable the lab stays search-only.
