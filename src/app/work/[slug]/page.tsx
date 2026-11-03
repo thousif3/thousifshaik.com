@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LiveStats from "@/components/LiveStats";
 import { domainById, itemById, projects } from "@/lib/content";
+import { clip } from "@/lib/site";
 
 export const dynamicParams = false;
 
@@ -13,7 +14,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const p = itemById[slug];
-  return p ? { title: `${p.title}: ${p.subtitle ?? "Case study"}`, description: p.summary } : {};
+  return p ? { title: `${p.title}: ${p.subtitle ?? "Case study"}`, description: clip(p.summary) } : {};
 }
 
 export default async function WorkPage({ params }: { params: Promise<{ slug: string }> }) {

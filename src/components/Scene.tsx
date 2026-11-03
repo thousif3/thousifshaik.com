@@ -314,19 +314,29 @@ function Cloud({ latent, glyph }: { latent: Latent; glyph: Float32Array }) {
 
 export default function Scene({ latent, onReady }: { latent: Latent; onReady?: () => void }) {
   const [glyph, setGlyph] = useState<Float32Array | null>(null);
+  const [active, setActive] = useState(true);
+  const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
-    const mobile = window.innerWidth < 760;
-    sampleWord("THOUSIF", mobile ? 4200 : 9000, GLYPH_WIDTH).then((g) => {
+    const m = window.innerWidth < 760 || window.matchMedia("(pointer: coarse)").matches;
+    setMobile(m);
+    sampleWord("THOUSIF", m ? 2800 : 9000, GLYPH_WIDTH).then((g) => {
       setGlyph(g);
       onReady?.();
     });
   }, [onReady]);
 
+  // Stop drawing frames once the visitor has scrolled past the flight (the canvas is behind the plain sections).
+  useEffect(() => {
+    const id = setInterval(() => setActive(flight.after < 0.98), 250);
+    return () => clearInterval(id);
+  }, []);
+
   if (!glyph) return null;
   return (
     <Canvas
-      dpr={[1, 1.75]}
+      frameloop={active ? "always" : "never"}
+      dpr={mobile ? [1, 1.25] : [1, 1.75]}
       gl={{ antialias: false, alpha: true, powerPreference: "high-performance" }}
       camera={{ fov: FOV, near: 0.1, far: 300, position: [0, 0, 40] }}
       style={{ position: "absolute", inset: 0 }}

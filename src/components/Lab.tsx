@@ -39,7 +39,8 @@ export default function Lab({ latent, mode }: { latent: Latent | null; mode: "sc
       if (res.ok && typeof data.answer === "string" && data.answer) setAnswer({ state: "done", text: data.answer });
       else setAnswer({ state: "error", msg: res.status === 429 ? "Too many questions in a row. Try again in a minute." : unavailable });
     } catch {
-      if (id === reqId.current) setAnswer({ state: "error", msg: unavailable });
+      if (id === reqId.current)
+        setAnswer({ state: "error", msg: typeof navigator !== "undefined" && !navigator.onLine ? "You appear to be offline. Reconnect and try again." : unavailable });
     }
   };
 

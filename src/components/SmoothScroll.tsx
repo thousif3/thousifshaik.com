@@ -47,6 +47,7 @@ export default function SmoothScroll() {
       if (!el) return;
       e.preventDefault();
       e.stopPropagation();
+      window.dispatchEvent(new Event("site:navigate")); // lets the mobile menu close (React never sees this click)
       scrollToTarget(el as HTMLElement);
       history.replaceState(null, "", url.hash);
     };
@@ -68,6 +69,7 @@ export default function SmoothScroll() {
     // Visibility is a function of what is on screen right now, not of scroll history, so a
     // fast jump (nav click, scrollbar drag, fast wheel) can never leave visible content hidden.
     const els = Array.from(document.querySelectorAll<HTMLElement>(".reveal"));
+    const touch = window.matchMedia("(pointer: coarse)").matches; // blur filters are costly on phones
     const io = new IntersectionObserver(
       (entries) => {
         const show: HTMLElement[] = [];
@@ -82,9 +84,9 @@ export default function SmoothScroll() {
         // hide can never start after (and undo) a show. Already-hidden elements need no tween.
         const toHide = hide.filter((el) => Number(gsap.getProperty(el, "opacity")) > 0.02);
         if (show.length)
-          gsap.to(show, { opacity: 1, y: 0, filter: "blur(0px)", stagger: 0.06, duration: 0.7, ease: "power3.out", overwrite: true });
+          gsap.to(show, { opacity: 1, y: 0, ...(touch ? {} : { filter: "blur(0px)" }), stagger: 0.06, duration: 0.7, ease: "power3.out", overwrite: true });
         if (toHide.length)
-          gsap.to(toHide, { opacity: 0, y: 24, filter: "blur(6px)", stagger: 0.03, duration: 0.4, overwrite: true });
+          gsap.to(toHide, { opacity: 0, y: 24, ...(touch ? {} : { filter: "blur(6px)" }), stagger: 0.03, duration: 0.4, overwrite: true });
       },
       { threshold: 0.08, rootMargin: "0px 0px -6% 0px" },
     );

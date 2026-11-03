@@ -12,6 +12,7 @@ import {
   type Item,
 } from "@/lib/content";
 import FooterModel from "./FooterModel";
+import Year from "./Year";
 
 const NOW = new Set(["building-manager", "parking-ops", "grader", "lsc-secretary"]);
 
@@ -147,7 +148,7 @@ export default function Sections() {
       </section>
 
       <footer className="foot">
-        <p>© 2026 {person.name} · {person.city}</p>
+        <p>© <Year /> {person.name} · {person.city}</p>
         <FooterModel />
       </footer>
     </div>

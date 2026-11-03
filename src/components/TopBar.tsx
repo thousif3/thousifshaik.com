@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { person } from "@/lib/content";
 
 function useClock(timeZone: string) {
@@ -18,8 +18,31 @@ function useClock(timeZone: string) {
 
 export default function TopBar() {
   const now = useClock(person.timeZone);
+  const [open, setOpen] = useState(false);
+  const btn = useRef<HTMLButtonElement>(null);
+
+  // close on Escape (returning focus to the button) and whenever a menu link is used
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        btn.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  // same-page hash links are handled before React sees the click, so they announce themselves
+  useEffect(() => {
+    const close = () => setOpen(false);
+    window.addEventListener("site:navigate", close);
+    return () => window.removeEventListener("site:navigate", close);
+  }, []);
+
   return (
-    <header className="topbar" aria-label="Site">
+    <header className={`topbar ${open ? "topbar--open" : ""}`} aria-label="Site">
       <Link href="/" className="brand">
         <span className="pulse-dot" aria-hidden="true" />
         {person.brand}
@@ -36,7 +59,19 @@ export default function TopBar() {
           </dd>
         </div>
       </dl>
-      <nav aria-label="Primary" className="links">
+      <button
+        ref={btn}
+        type="button"
+        className="menu-btn"
+        aria-expanded={open}
+        aria-controls="site-nav"
+        aria-label={open ? "Close menu" : "Open menu"}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span aria-hidden="true" />
+        <span aria-hidden="true" />
+      </button>
+      <nav id="site-nav" aria-label="Primary" className="links" onClick={() => setOpen(false)}>
         <Link href="/#work">Work</Link>
         <Link href="/#experience">Experience</Link>
         <Link href="/#contact">Contact</Link>

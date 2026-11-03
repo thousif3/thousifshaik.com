@@ -42,9 +42,11 @@ jobs:
       - run: npm run build
         env:
           NEXT_TELEMETRY_DISABLED: "1"
-          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://thousif3.github.io' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SITE_URL || 'https://thousifshaik.com' }}
           # URL of the deployed worker/ (leave the variable unset to ship the lab as search-only)
           NEXT_PUBLIC_ASK_URL: ${{ vars.ASK_URL }}
+          # Google Analytics 4 measurement ID (G-XXXXXXXXXX); leave the variable unset for no analytics
+          NEXT_PUBLIC_GA_ID: ${{ vars.GA_ID }}
 
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
