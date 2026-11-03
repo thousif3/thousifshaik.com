@@ -8,7 +8,6 @@ import { domainById, domains, featured, itemById, items, pad2, person } from "@/
 import { loadLatent, type Latent } from "@/lib/latent";
 import { clamp01, flight, near, smooth } from "@/lib/store";
 import Inspector from "./Inspector";
-import HeroSignature from "./HeroSignature";
 import Lab from "./Lab";
 import Monogram from "./Monogram";
 import ProjectCard from "./ProjectCard";
@@ -36,11 +35,11 @@ export default function Flight() {
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [latent, setLatent] = useState<Latent | null>(null);
   const [sceneReady, setSceneReady] = useState(false);
+  const [introDone, setIntroDone] = useState(false); // the loader mark has finished drawing
   const [flat, setFlat] = useState(false);
 
   const stage = useRef<HTMLDivElement>(null);
   const hero = useRef<HTMLDivElement>(null);
-  const sig = useRef<HTMLDivElement>(null);
   const disperse = useRef<HTMLDivElement>(null);
   const lab = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLDivElement | null)[]>([]);
@@ -74,6 +73,12 @@ export default function Flight() {
   const on = webgl === true && !flat;
 
   const onReady = useCallback(() => setSceneReady(true), []);
+
+  // the TS mark always plays through to the end before the page is revealed, even if the scene is ready sooner
+  useEffect(() => {
+    const t = setTimeout(() => setIntroDone(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   // scroll -> flight position
   useEffect(() => {
@@ -122,7 +127,6 @@ export default function Flight() {
       const s = flight.s;
       const h = 1 - smooth(clamp01(s / 0.55));
       show(hero.current, h, -40 * (1 - h));
-      show(sig.current, h, -24 * (1 - h));
       show(hint.current, h);
       const dsp = near(s, 1, 0.6);
       show(disperse.current, dsp, 20 * (1 - dsp));
@@ -243,15 +247,12 @@ export default function Flight() {
         {on && latent && <Scene latent={latent} onReady={onReady} />}
         <div className="stage-veil" />
       </div>
-      <div className={`loader ${sceneReady ? "loader--done" : ""}`} aria-hidden="true">
-        <Monogram size={88} draw />
+      <div className={`loader ${sceneReady && introDone ? "loader--done" : ""}`} aria-hidden="true">
+        <Monogram size={96} draw />
       </div>
 
       <section id="flight" style={{ height: `${STOPS * 100}vh` }} aria-label="Fly through the work">
         <div className="flight-sticky">
-          <div className="ov ov-sig" ref={sig} aria-hidden="true">
-            <HeroSignature ready={sceneReady} />
-          </div>
           <div className="ov ov-hero" ref={hero}>
             {heroCopy}
           </div>
