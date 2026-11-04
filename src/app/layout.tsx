@@ -8,6 +8,7 @@ import Cursor from "@/components/Cursor";
 import SmoothScroll from "@/components/SmoothScroll";
 import TopBar from "@/components/TopBar";
 import BackToTop from "@/components/BackToTop";
+import AmbientField from "@/components/AmbientField";
 import { person } from "@/lib/content";
 import Analytics from "@/components/Analytics";
 import { SITE_URL } from "@/lib/site";
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <SmoothScroll />
         <TopBar />
         <BackToTop />
+        <AmbientField />
         <main id="main">{children}</main>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <Analytics />
