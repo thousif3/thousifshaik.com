@@ -12,20 +12,34 @@ export async function sampleWord(word: string, count: number, worldWidth: number
 
   const family = "'Inter Tight Variable', 'Inter Tight', system-ui, sans-serif";
   try {
-    await document.fonts.load(`800 260px ${family}`);
+    await document.fonts.load(`700 260px ${family}`);
   } catch {
     /* fall back to system font */
   }
   ctx.fillStyle = "#fff";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+  // draw letter by letter with extra tracking so the glow of neighbouring letters does not fuse
+  ctx.textAlign = "left";
+  const TRACK = 0.1;
   let size = 280;
-  ctx.font = `800 ${size}px ${family}`;
-  while (ctx.measureText(word).width > W * 0.94 && size > 40) {
+  let widths: number[] = [];
+  let total = 0;
+  const measure = () => {
+    ctx.font = `700 ${size}px ${family}`;
+    widths = [...word].map((ch) => ctx.measureText(ch).width);
+    total = widths.reduce((a, b) => a + b, 0) + size * TRACK * (word.length - 1);
+  };
+  measure();
+  while (total > W * 0.94 && size > 40) {
     size -= 8;
-    ctx.font = `800 ${size}px ${family}`;
+    measure();
   }
-  ctx.fillText(word, W / 2, H / 2 + size * 0.04);
+  let x = (W - total) / 2;
+  [...word].forEach((ch, i) => {
+    ctx.fillText(ch, x, H / 2 + size * 0.04);
+    x += widths[i] + size * TRACK;
+  });
 
   const data = ctx.getImageData(0, 0, W, H).data;
   const pixels: number[] = [];
