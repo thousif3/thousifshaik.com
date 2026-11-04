@@ -320,7 +320,7 @@ ol.case-bullets { list-style: decimal; }
 }
 
 @media print {
-  .topbar, .cursor, .cursor-ring, .no-print, .stage, .skip { display: none !important; }
+  .topbar, .cursor, .cursor-ring, .no-print, .stage, .skip, .ambient { display: none !important; }
   html, body { background: #fff !important; color: #000 !important; }
   .resume { padding: 0; color: #222; font-size: 11pt; }
   .resume header h1, .resume h3 { color: #000; }
@@ -379,3 +379,6 @@ ol.case-bullets { list-style: decimal; }
 @keyframes mono-trace { to { stroke-dashoffset: 0; } }
 @keyframes mono-fill { to { fill-opacity: 1; } }
 @keyframes mono-glow { to { filter: drop-shadow(0 0 14px rgba(34, 211, 238, 0.6)); } }
+
+/* ---------- ambient floating particles (every page) ---------- */
+.ambient { position: fixed; inset: 0; z-index: 3; pointer-events: none; opacity: 0; }
