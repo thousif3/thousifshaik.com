@@ -16,6 +16,8 @@ export const pointsVertex = /* glsl */ `
   uniform float uSwirl;
   uniform float uDrift;
   uniform float uBoost;
+  uniform vec3 uMouse;
+  uniform float uMouseStr;
 
   attribute vec3 aStart;
   attribute vec3 aEnd;
@@ -50,6 +52,24 @@ export const pointsVertex = /* glsl */ `
       cos(uTime * 0.27 + aSeed * 7.0),
       sin(uTime * 0.23 + aSeed * 5.0)
     ) * drift;
+
+    // hovering: while the name is still a name, particles float on their own...
+    float home = 1.0 - t;
+    p += vec3(
+      sin(uTime * 0.9 + aSeed * 31.0),
+      cos(uTime * 0.8 + aSeed * 19.0),
+      sin(uTime * 0.7 + aSeed * 13.0)
+    ) * 0.2 * home * uDrift;
+
+    // ...and are pushed aside, with a little swirl, by the cursor
+    vec3 dm = p - uMouse;
+    dm.z *= 0.4;
+    float dl = length(dm);
+    float push = exp(-dl * dl / 7.0) * uMouseStr * home;
+    vec3 dir = dm / max(dl, 0.001);
+    p += dir * push * 2.4;
+    p += vec3(-dir.y, dir.x, 0.0) * push * 0.9;
+    p.z += push * (aSeed - 0.5) * 3.0;
 
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;

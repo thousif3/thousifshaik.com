@@ -31,6 +31,8 @@ function makeMaterial(size: number, opacity: number, additive = true) {
       uSwirl: { value: 2.2 },
       uDrift: { value: 1 },
       uBoost: { value: 1 },
+      uMouse: { value: new THREE.Vector3(999, 999, 0) },
+      uMouseStr: { value: 0 },
       uOpacity: { value: opacity },
     },
   });
@@ -203,6 +205,30 @@ function Cloud({ latent, glyph }: { latent: Latent; glyph: Float32Array }) {
   const lookAt = useRef(new THREE.Vector3());
   const tmpRight = useRef(new THREE.Vector3());
   const started = useRef(false);
+  const pointerNdc = useRef({ x: 0, y: 0, active: false });
+  const ray = useRef(new THREE.Vector2());
+  const mouseWorld = useRef(new THREE.Vector3(999, 999, 0));
+  const mouseSmooth = useRef(new THREE.Vector3(999, 999, 0));
+  const mouseStr = useRef(0);
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      pointerNdc.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointerNdc.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      pointerNdc.current.active = true;
+    };
+    const leave = () => {
+      pointerNdc.current.active = false;
+    };
+    window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("pointerup", leave, { passive: true });
+    document.documentElement.addEventListener("pointerleave", leave);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", leave);
+      document.documentElement.removeEventListener("pointerleave", leave);
+    };
+  }, []);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
@@ -216,6 +242,24 @@ function Cloud({ latent, glyph }: { latent: Latent; glyph: Float32Array }) {
       m.uniforms.uPixelRatio.value = pr;
       // far hero camera (portrait phones) -> keep points visible, fading back as the cloud forms
       m.uniforms.uBoost.value = 1 + (heroDist.current / 24 - 1) * (1 - morph);
+    }
+    // cursor -> point on the z=0 plane (where the name sits); eased so the push trails the mouse
+    const pt = pointerNdc.current;
+    if (pt.active) {
+      ray.current.set(pt.x, pt.y);
+      raycaster.setFromCamera(ray.current, camera);
+      const r = raycaster.ray;
+      if (Math.abs(r.direction.z) > 1e-4) {
+        const k0 = -r.origin.z / r.direction.z;
+        mouseWorld.current.copy(r.origin).addScaledVector(r.direction, k0);
+        mouseWorld.current.z = 0;
+      }
+    }
+    mouseSmooth.current.lerp(mouseWorld.current, 1 - Math.exp(-dt * 9));
+    mouseStr.current += ((pt.active ? 1 : 0) - mouseStr.current) * (1 - Math.exp(-dt * 4));
+    for (const m of [dust.mat, data.mat]) {
+      m.uniforms.uMouse.value.copy(mouseSmooth.current);
+      m.uniforms.uMouseStr.value = mouseStr.current * (1 - morph);
     }
     const hoverIdx = flight.hover ? latent.items.findIndex((i) => i.id === flight.hover) : -1;
     const focusIdx = flight.focus ? latent.items.findIndex((i) => i.id === flight.focus) : -1;
