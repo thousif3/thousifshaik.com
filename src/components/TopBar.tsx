@@ -60,7 +60,7 @@ export default function TopBar() {
           history.replaceState(null, "", location.pathname + location.search);
         }}
       >
-        <Monogram size={38} />
+        <Monogram size={30} />
       </Link>
       <dl className="meta">
         <div>

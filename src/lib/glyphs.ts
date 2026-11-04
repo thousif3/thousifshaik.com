@@ -1,53 +1,52 @@
-/**
- * The hero's point cloud: an abstract head-and-shoulders silhouette (outline plus a sparse, softly toned
- * interior). It is generated offline into public/head.json from a photo; the file holds no facial detail
- * and the photo itself is never shipped.
- */
+/** Sample a word into 3D points by rasterizing it on a 2D canvas. */
 
-type HeadData = { aspect: number; h: number; pts: [number, number, number][] };
+export async function sampleWord(word: string, count: number, worldWidth: number): Promise<Float32Array> {
+  const W = 1400;
+  const H = 360;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const out = new Float32Array(count * 3);
+  if (!ctx) return out;
 
-let cache: Promise<HeadData> | null = null;
-
-function loadHead(): Promise<HeadData> {
-  if (!cache) {
-    cache = fetch("/head.json").then((r) => {
-      if (!r.ok) throw new Error(`head.json ${r.status}`);
-      return r.json() as Promise<HeadData>;
-    });
+  const family = "'Inter Tight Variable', 'Inter Tight', system-ui, sans-serif";
+  try {
+    await document.fonts.load(`800 260px ${family}`);
+  } catch {
+    /* fall back to system font */
   }
-  return cache;
-}
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  let size = 280;
+  ctx.font = `800 ${size}px ${family}`;
+  while (ctx.measureText(word).width > W * 0.94 && size > 40) {
+    size -= 8;
+    ctx.font = `800 ${size}px ${family}`;
+  }
+  ctx.fillText(word, W / 2, H / 2 + size * 0.04);
 
-export type HeadFrame = { cx: number; cy: number; height: number };
-
-const smoothstep = (a: number, b: number, x: number) => {
-  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
-};
-
-/** Sample `count` points into world space. `w` is a 0..1 weight per point (outline = 1, interior is dimmer). */
-export async function sampleHead(count: number, frame: HeadFrame): Promise<{ pos: Float32Array; w: Float32Array }> {
-  const head = await loadHead();
-  const scale = frame.height / head.h; // world units per image-width unit
+  const data = ctx.getImageData(0, 0, W, H).data;
+  const pixels: number[] = [];
+  const step = 3;
+  for (let y = 0; y < H; y += step) {
+    for (let x = 0; x < W; x += step) {
+      if (data[(y * W + x) * 4 + 3] > 140) pixels.push(x, y);
+    }
+  }
+  const n = pixels.length / 2;
+  const scale = worldWidth / W;
   // deterministic pseudo-random so the shape is identical every visit
   let seed = 1337;
   const rand = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-
-  // the bust is cut off at the bottom of the photo: thin the points out there so it fades instead of ending in a hard edge
-  const pool: [number, number, number][] = [];
-  for (const p of head.pts) {
-    const fade = 1 - smoothstep(0.12, 0.52, p[1]);
-    if (rand() < fade) pool.push(p);
-  }
-  const pos = new Float32Array(count * 3);
-  const w = new Float32Array(count);
   for (let i = 0; i < count; i++) {
-    const p = pool[i % pool.length];
-    const jitter = i < pool.length ? 0.0015 : 0.004; // repeats get a little scatter so they don't stack
-    pos[i * 3] = frame.cx + (p[0] + (rand() - 0.5) * jitter) * scale;
-    pos[i * 3 + 1] = frame.cy - (p[1] + (rand() - 0.5) * jitter) * scale;
-    pos[i * 3 + 2] = (rand() - 0.5) * 0.9;
-    w[i] = p[2] * (1 - 0.5 * smoothstep(0.05, 0.5, p[1]));
+    const k = n > 0 ? Math.floor(rand() * n) : 0;
+    const px = n > 0 ? pixels[k * 2] : W / 2;
+    const py = n > 0 ? pixels[k * 2 + 1] : H / 2;
+    out[i * 3] = (px - W / 2 + (rand() - 0.5) * step) * scale;
+    out[i * 3 + 1] = -(py - H / 2 + (rand() - 0.5) * step) * scale;
+    out[i * 3 + 2] = (rand() - 0.5) * 0.9;
   }
-  return { pos, w };
+  return out;
 }

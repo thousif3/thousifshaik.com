@@ -4,36 +4,13 @@ import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber"
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { domainById, featured, itemById } from "@/lib/content";
-import { sampleHead, type HeadFrame } from "@/lib/glyphs";
+import { sampleWord } from "@/lib/glyphs";
 import type { Latent } from "@/lib/latent";
 import { STOP, clamp01, flight, near, smooth } from "@/lib/store";
 import { pointsFragment, pointsVertex } from "@/shaders/points";
 
 const GLYPH_WIDTH = 26;
 const FOV = 45;
-
-/** Where the hero camera sits and what it sees, from the viewport size. */
-function heroLayout(width: number, height: number) {
-  const aspect = width / Math.max(1, height);
-  const halfTan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
-  const heroZ = Math.max(24, (GLYPH_WIDTH / 2 / (halfTan * aspect)) * 1.12);
-  const hv = halfTan * heroZ; // half the visible height at the hero distance
-  // the head sits in the upper part of the view so the headline below it stays clear
-  const lift = -hv * 0.52;
-  return { aspect, heroZ, hv, lift };
-}
-
-/** Head-and-shoulders placement: right of centre on wide screens, centred and cropped on phones. */
-const HEAD_ASPECT = 1.035; // image height / width of the silhouette data
-function headFrame(width: number, height: number): HeadFrame {
-  const L = heroLayout(width, height);
-  const hw = L.hv * L.aspect;
-  const portrait = L.aspect < 1;
-  const h = portrait ? Math.min(1.1 * L.hv, 2.4 * hw * HEAD_ASPECT) : Math.min(1.58 * L.hv, 1.04 * hw * HEAD_ASPECT);
-  const cx = portrait ? 0.08 * hw : 0.22 * hw;
-  const f = portrait ? 0.36 : 0.46; // vertical centre, as a fraction of the viewport height from the top
-  return { cx, cy: L.lift + L.hv - f * 2 * L.hv, height: h };
-}
 
 type Stop = { cam: THREE.Vector3; target: THREE.Vector3; card: boolean };
 
@@ -54,6 +31,8 @@ function makeMaterial(size: number, opacity: number, additive = true) {
       uSwirl: { value: 2.2 },
       uDrift: { value: 1 },
       uBoost: { value: 1 },
+      uMouse: { value: new THREE.Vector3(999, 999, 0) },
+      uMouseStr: { value: 0 },
       uOpacity: { value: opacity },
     },
   });
@@ -64,7 +43,7 @@ function rand(seed: number) {
   return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646;
 }
 
-function Cloud({ latent, glyph, glyphW }: { latent: Latent; glyph: Float32Array; glyphW: Float32Array }) {
+function Cloud({ latent, glyph }: { latent: Latent; glyph: Float32Array }) {
   const { camera, size, gl, raycaster } = useThree();
   const dustCount = glyph.length / 3;
 
@@ -94,10 +73,9 @@ function Cloud({ latent, glyph, glyphW }: { latent: Latent; glyph: Float32Array;
       end[i * 3 + 1] = y;
       end[i * 3 + 2] = Math.sin(th) * rad;
       const c = white.clone().lerp(r() < 0.75 ? cyan : violet, r() * 0.8);
-      const dim = 0.5 + 0.5 * glyphW[i]; // outline points are a little brighter than the interior, all of them subdued
-      color.set([c.r * 0.5 * dim, c.g * 0.5 * dim, c.b * 0.55 * dim], i * 3);
+      color.set([c.r * 0.55, c.g * 0.55, c.b * 0.6], i * 3);
       seed[i] = r();
-      sz[i] = (0.9 + r() * 1.5) * (0.7 + 0.45 * glyphW[i]);
+      sz[i] = 0.9 + r() * 1.5;
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(end, 3));
@@ -108,7 +86,7 @@ function Cloud({ latent, glyph, glyphW }: { latent: Latent; glyph: Float32Array;
     g.setAttribute("aSize", new THREE.BufferAttribute(sz, 1));
     g.setAttribute("aIndex", new THREE.BufferAttribute(idx, 1));
     return { geo: g, mat: makeMaterial(38, 0.62) };
-  }, [dustCount, glyph, glyphW]);
+  }, [dustCount, glyph]);
 
   // ---------- data: one point per real item ----------
   const data = useMemo(() => {
@@ -180,8 +158,12 @@ function Cloud({ latent, glyph, glyphW }: { latent: Latent; glyph: Float32Array;
   // ---------- camera stops ----------
   const heroDist = useRef(24);
   const stops = useMemo<Stop[]>(() => {
-    const { heroZ, lift } = heroLayout(size.width, size.height);
+    const aspect = size.width / Math.max(1, size.height);
+    const halfTan = Math.tan(THREE.MathUtils.degToRad(FOV / 2));
+    const heroZ = Math.max(24, ((GLYPH_WIDTH / 2) / (halfTan * aspect)) * 1.12);
     heroDist.current = heroZ;
+    // glyph sits ~30% from the top so the headline below it stays clear
+    const lift = -halfTan * heroZ * 0.52;
     const out: Stop[] = [
       { cam: new THREE.Vector3(0, lift, heroZ), target: new THREE.Vector3(0, lift, 0), card: false },
       { cam: new THREE.Vector3(9, 7, 25), target: new THREE.Vector3(0, 0, 0), card: false },
@@ -223,6 +205,30 @@ function Cloud({ latent, glyph, glyphW }: { latent: Latent; glyph: Float32Array;
   const lookAt = useRef(new THREE.Vector3());
   const tmpRight = useRef(new THREE.Vector3());
   const started = useRef(false);
+  const pointerNdc = useRef({ x: 0, y: 0, active: false });
+  const ray = useRef(new THREE.Vector2());
+  const mouseWorld = useRef(new THREE.Vector3(999, 999, 0));
+  const mouseSmooth = useRef(new THREE.Vector3(999, 999, 0));
+  const mouseStr = useRef(0);
+
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      pointerNdc.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      pointerNdc.current.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      pointerNdc.current.active = true;
+    };
+    const leave = () => {
+      pointerNdc.current.active = false;
+    };
+    window.addEventListener("pointermove", move, { passive: true });
+    window.addEventListener("pointerup", leave, { passive: true });
+    document.documentElement.addEventListener("pointerleave", leave);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", leave);
+      document.documentElement.removeEventListener("pointerleave", leave);
+    };
+  }, []);
 
   useFrame((state, dt) => {
     const t = state.clock.elapsedTime;
@@ -236,6 +242,24 @@ function Cloud({ latent, glyph, glyphW }: { latent: Latent; glyph: Float32Array;
       m.uniforms.uPixelRatio.value = pr;
       // far hero camera (portrait phones) -> keep points visible, fading back as the cloud forms
       m.uniforms.uBoost.value = 1 + (heroDist.current / 24 - 1) * (1 - morph);
+    }
+    // cursor -> point on the z=0 plane (where the name sits); eased so the push trails the mouse
+    const pt = pointerNdc.current;
+    if (pt.active) {
+      ray.current.set(pt.x, pt.y);
+      raycaster.setFromCamera(ray.current, camera);
+      const r = raycaster.ray;
+      if (Math.abs(r.direction.z) > 1e-4) {
+        const k0 = -r.origin.z / r.direction.z;
+        mouseWorld.current.copy(r.origin).addScaledVector(r.direction, k0);
+        mouseWorld.current.z = 0;
+      }
+    }
+    mouseSmooth.current.lerp(mouseWorld.current, 1 - Math.exp(-dt * 9));
+    mouseStr.current += ((pt.active ? 1 : 0) - mouseStr.current) * (1 - Math.exp(-dt * 4));
+    for (const m of [dust.mat, data.mat]) {
+      m.uniforms.uMouse.value.copy(mouseSmooth.current);
+      m.uniforms.uMouseStr.value = mouseStr.current * (1 - morph);
     }
     const hoverIdx = flight.hover ? latent.items.findIndex((i) => i.id === flight.hover) : -1;
     const focusIdx = flight.focus ? latent.items.findIndex((i) => i.id === flight.focus) : -1;
@@ -333,42 +357,17 @@ function Cloud({ latent, glyph, glyphW }: { latent: Latent; glyph: Float32Array;
 }
 
 export default function Scene({ latent, onReady }: { latent: Latent; onReady?: () => void }) {
-  const [head, setHead] = useState<{ pos: Float32Array; w: Float32Array } | null>(null);
+  const [glyph, setGlyph] = useState<Float32Array | null>(null);
   const [active, setActive] = useState(true);
   const [mobile, setMobile] = useState(false);
 
   useEffect(() => {
     const m = window.innerWidth < 760 || window.matchMedia("(pointer: coarse)").matches;
     setMobile(m);
-    let cancelled = false;
-    let first = true;
-    let last = { w: window.innerWidth, a: window.innerWidth / window.innerHeight };
-    const build = () => {
-      last = { w: window.innerWidth, a: window.innerWidth / window.innerHeight };
-      sampleHead(m ? 2800 : 9000, headFrame(window.innerWidth, window.innerHeight)).then((r) => {
-        if (cancelled) return;
-        setHead(r);
-        if (first) {
-          first = false;
-          onReady?.();
-        }
-      });
-    };
-    build();
-    // re-place the head only for a real change of shape (rotation, window resize), not for the phone address bar
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const onResize = () => {
-      const a = window.innerWidth / window.innerHeight;
-      if (window.innerWidth === last.w && Math.abs(a / last.a - 1) < 0.2) return;
-      clearTimeout(timer);
-      timer = setTimeout(build, 250);
-    };
-    window.addEventListener("resize", onResize);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      window.removeEventListener("resize", onResize);
-    };
+    sampleWord("THOUSIF", m ? 2800 : 9000, GLYPH_WIDTH).then((g) => {
+      setGlyph(g);
+      onReady?.();
+    });
   }, [onReady]);
 
   // Stop drawing frames once the visitor has scrolled past the flight (the canvas is behind the plain sections).
@@ -377,7 +376,7 @@ export default function Scene({ latent, onReady }: { latent: Latent; onReady?: (
     return () => clearInterval(id);
   }, []);
 
-  if (!head) return null;
+  if (!glyph) return null;
   return (
     <Canvas
       frameloop={active ? "always" : "never"}
@@ -387,7 +386,7 @@ export default function Scene({ latent, onReady }: { latent: Latent; onReady?: (
       style={{ position: "absolute", inset: 0 }}
       aria-hidden="true"
     >
-      <Cloud latent={latent} glyph={head.pos} glyphW={head.w} />
+      <Cloud latent={latent} glyph={glyph} />
     </Canvas>
   );
 }
