@@ -58,6 +58,9 @@ const jsonLd = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: "try{if(sessionStorage.getItem('ts-loader')==='1')document.documentElement.classList.add('no-loader')}catch(e){}" }} />
+      </head>
       <body>
         <a href="#main" className="skip">Skip to content</a>
         <Cursor />

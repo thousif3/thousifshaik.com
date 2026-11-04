@@ -460,14 +460,6 @@
       "summary": "Product ownership: backlog, prioritization and maximizing value delivered."
     },
     {
-      "id": "task-java",
-      "kind": "cert",
-      "domain": "eng",
-      "title": "Java Fundamentals, 90 hours",
-      "org": "TASK · Telangana State Government",
-      "summary": "90-hour Java programming training."
-    },
-    {
       "id": "cpc-gold",
       "kind": "award",
       "domain": "product",
@@ -600,13 +592,6 @@
       "domain": "eng",
       "title": "React & web front end",
       "summary": "HTML, CSS, JavaScript and React interfaces."
-    },
-    {
-      "id": "sk-java",
-      "kind": "skill",
-      "domain": "eng",
-      "title": "Java",
-      "summary": "Object-oriented programming in Java."
     },
     {
       "id": "sk-docker",

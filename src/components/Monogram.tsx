@@ -11,8 +11,8 @@ export default function Monogram({ size = 40, draw = false, className = "" }: { 
     <svg className={`mono ${draw ? "mono--draw" : ""} ${className}`} width={w} height={size} viewBox="0 0 88 48" fill="none" aria-hidden="true">
       <defs>
         <linearGradient id={id} x1="0" y1="4" x2="88" y2="44" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#22d3ee" />
-          <stop offset="1" stopColor="#8b5cf6" />
+          <stop offset="0" stopColor="#2aa9bf" />
+          <stop offset="1" stopColor="#7358c9" />
         </linearGradient>
       </defs>
       <g transform="skewX(-12) translate(2 0)" stroke={`url(#${id})`} strokeWidth="1.4" strokeLinejoin="miter" fill={`url(#${id})`}>

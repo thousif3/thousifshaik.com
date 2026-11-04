@@ -76,9 +76,28 @@ export default function Flight() {
 
   // the TS mark always plays through to the end before the page is revealed, even if the scene is ready sooner
   useEffect(() => {
+    // already seen in this browser session: no loader, no wait
+    if (document.documentElement.classList.contains("no-loader")) {
+      setIntroDone(true);
+      return;
+    }
     const t = setTimeout(() => setIntroDone(true), 2000);
     return () => clearTimeout(t);
   }, []);
+
+  // remember that the loader has played, so going to a project and back does not replay it
+  useEffect(() => {
+    if (!(sceneReady && introDone)) return;
+    const t = setTimeout(() => {
+      try {
+        sessionStorage.setItem("ts-loader", "1");
+      } catch {
+        /* storage unavailable: loader will simply play again next time */
+      }
+      document.documentElement.classList.add("no-loader");
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [sceneReady, introDone]);
 
   // scroll -> flight position
   useEffect(() => {
