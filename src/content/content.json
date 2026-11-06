@@ -82,10 +82,6 @@
         {
           "label": "Live stats",
           "href": "https://thousif3.github.io/talon-stats/"
-        },
-        {
-          "label": "TALON Chat",
-          "href": "https://thousif3.github.io/talon-chat/"
         }
       ],
       "liveStats": true
@@ -327,12 +323,7 @@
         "APIs",
         "GitHub Pages"
       ],
-      "links": [
-        {
-          "label": "Open TALON Chat",
-          "href": "https://thousif3.github.io/talon-chat/"
-        }
-      ]
+      "links": []
     },
     {
       "id": "building-manager",
