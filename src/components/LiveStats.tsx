@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { person } from "@/lib/content";
 
-type Stats = { jobs?: number; strong?: number; when?: string; stale?: boolean };
+type Stats = { jobs?: number; strong?: number; when?: string; stale?: boolean; mock?: boolean };
 
 /** Live numbers from TALON's public stats feed (exported by the TALON server to GitHub Pages). */
 export default function LiveStats({ compact = false }: { compact?: boolean }) {
@@ -22,6 +22,8 @@ export default function LiveStats({ compact = false }: { compact?: boolean }) {
           jobs: d.pipeline?.jobsScanned,
           strong: d.pipeline?.score7plus,
           when,
+          // the feed marks invented demo data with "_MOCK": true; never show those numbers as live
+          mock: d._MOCK === true,
           stale: Number.isFinite(ts) ? Date.now() - ts > 36 * 3600_000 : undefined,
         });
       })
@@ -39,6 +41,8 @@ export default function LiveStats({ compact = false }: { compact?: boolean }) {
         <span>TALON feed</span>
         {err ? (
           <span className="live-off">offline</span>
+        ) : s?.mock ? (
+          <span className="live-demo" title="Sample numbers, not from the real TALON pipeline">demo</span>
         ) : s?.stale ? (
           <span className="live-off">archived</span>
         ) : (
@@ -49,7 +53,7 @@ export default function LiveStats({ compact = false }: { compact?: boolean }) {
         <div><b>{fmt(s?.jobs)}</b><small>jobs scanned</small></div>
         <div><b>{fmt(s?.strong)}</b><small>scored 7+</small></div>
       </div>
-      {s?.when && <p className="live-when">updated {s.when}</p>}
+      {s?.when && <p className="live-when">{s.mock ? "sample numbers, not from the real pipeline" : `updated ${s.when}`}</p>}
     </div>
   );
 }

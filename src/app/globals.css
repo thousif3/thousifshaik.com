@@ -135,6 +135,7 @@ html.use-custom-cursor .cursor,html.use-custom-cursor .cursor-ring{display:block
 .live-on { color: #34d399; display: flex; align-items: center; gap: 6px; }
 .live-on i { width: 5px; height: 5px; border-radius: 50%; background: #34d399; box-shadow: 0 0 6px #34d399; animation: pulse 1.5s infinite; }
 .live-off { color: #fbbf24; }
+.live-demo { color: #e879f9; border: 1px dashed currentColor; border-radius: 99px; padding: 1px 8px; letter-spacing: 0.14em; }
 .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .live-grid div { display: grid; }
 .live-grid b { font-family: var(--mono); font-size: 22px; font-weight: 500; color: var(--cyan); }
