@@ -40,7 +40,9 @@ src/content/content.json  ──►  pipeline/embed.py  ──►  public/latent
 
 1. Change `src/content/content.json`.
 2. `python3 pipeline/embed.py` to rebuild the layout (CI does this on every push).
-3. Push to `main`.
+3. Open a pull request and merge it into `main` (the deploy runs on merge).
+4. If the Ask assistant is on, redeploy it so it reads the new text:
+   `git checkout main && git pull && cd worker && npx wrangler deploy`.
 
 ## Run locally
 
@@ -55,7 +57,7 @@ npm run dev
 
 Repo **Settings → Pages → Source: GitHub Actions**. Every push to `main` runs
 `.github/workflows/deploy.yml`. For a custom domain, set it under Settings → Pages
-and add a repo variable `SITE_URL` (e.g. `https://thousif3.dev`) so the sitemap and
+and add a repo variable `SITE_URL` (here `https://thousifshaik.com`) so the sitemap and
 share cards use it.
 
 ## Ask-about-me assistant (optional)

@@ -134,7 +134,10 @@ export default {
     try {
       const raw = await req.text();
       if (raw.length > 2000) return json({ error: "too large" }, 413, h);
-      question = String((JSON.parse(raw) as { question?: unknown }).question ?? "").trim();
+      const q = (JSON.parse(raw) as { question?: unknown } | null)?.question;
+      // a number, list or object is not a question; don't coerce it into one and spend a model call
+      if (q != null && typeof q !== "string") return json({ error: "question must be text" }, 400, h);
+      question = (q ?? "").trim();
     } catch {
       return json({ error: "bad request" }, 400, h);
     }
